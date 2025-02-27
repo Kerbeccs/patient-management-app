@@ -16,6 +16,8 @@ class AuthViewModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
+  User? get currentUser => _auth.currentUser;
+
   // Add Google Sign In Method
   Future<bool> signInWithGoogle() async {
     try {

@@ -115,3 +115,68 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
+
+class BookingSlot {
+  final String time;
+  final int capacity;
+  int booked;
+
+  BookingSlot(this.time, this.capacity) : booked = 0;
+
+  bool canBook() => booked < capacity;
+
+  void book() {
+    if (canBook()) {
+      booked++;
+    } else {
+      throw Exception('Slot is full');
+    }
+  }
+}
+
+class BookingManager {
+  final DateTime bookingDate;
+  final List<BookingSlot> slots;
+
+  BookingManager()
+      : bookingDate = DateTime.now().add(const Duration(days: 4)),
+        slots = [
+          BookingSlot('9-10am', 6),
+          BookingSlot('2:30-3:30pm', 10),
+          BookingSlot('8-9pm', 10),
+        ];
+
+  bool isBookingDateValid(DateTime date) {
+    return date.year == bookingDate.year &&
+        date.month == bookingDate.month &&
+        date.day == bookingDate.day;
+  }
+
+  void bookSlot(String time) {
+    final slot = slots.firstWhere((slot) => slot.time == time, orElse: () => throw Exception('Invalid slot time'));
+    if (slot.canBook()) {
+      slot.book();
+      print('Booking successful for $time');
+    } else {
+      print('Slot $time is full');
+    }
+  }
+}
+
+// Usage example
+void main() {
+  final bookingManager = BookingManager();
+
+  // Check if the booking date is valid
+  if (bookingManager.isBookingDateValid(DateTime.now().add(const Duration(days: 4)))) {
+    try {
+      bookingManager.bookSlot('9-10am');
+      bookingManager.bookSlot('2:30-3:30pm');
+      // Attempt to book more slots as needed
+    } catch (e) {
+      print(e);
+    }
+  } else {
+    print('Bookings can only be made for 4 days from now');
+  }
+}

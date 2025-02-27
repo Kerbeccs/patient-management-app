@@ -60,9 +60,15 @@ class LoginScreen extends StatelessWidget {
                     : () async {
                         String email = emailController.text.trim();
                         String password = passwordController.text.trim();
-                        await authViewModel.login(email, password);
-                        if (authViewModel.errorMessage == null) {
-                          Navigator.pushReplacementNamed(context, '/patient');
+                        
+                        // Check for doctor credentials
+                        if (email == "DRJC" && password == "DRJC01") {
+                          Navigator.pushReplacementNamed(context, '/doctor');
+                        } else {
+                          await authViewModel.login(email, password);
+                          if (authViewModel.errorMessage == null) {
+                            Navigator.pushReplacementNamed(context, '/patient');
+                          }
                         }
                       },
                 child: const Text("Login"),

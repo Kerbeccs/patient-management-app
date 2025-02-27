@@ -5,6 +5,7 @@ import 'ui/views/splash_screen.dart';
 import 'ui/views/patient_dashboard.dart';
 import 'ui/views/login_screen.dart';
 import 'ui/views/signup_screen.dart';
+import 'ui/views/doctor_dashboard.dart';
 import 'viewmodels/auth_viewmodels.dart';
 
 void main() async {
@@ -30,11 +31,12 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData.light(),
       darkTheme: ThemeData.dark(),
-      themeMode: ThemeMode.system, // Uses system setting
+      themeMode: ThemeMode.system, 
       initialRoute: '/',
       routes: {
         '/': (context) => const SplashScreen(),
         '/patient': (context) => const PatientDashboard(),
+        '/doctor': (context) => const DoctorDashboard(),
         '/login': (context) => LoginScreen(), // Ensure LoginScreen is included
         '/signup': (context) => SignupScreen(),
       },

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/auth_viewmodels.dart';
+import '../views/booking_screen.dart';
+import '../views/upload_report_screen.dart';
+import '../../viewmodels/ticket_view_model.dart';
+import '../widgets/appointment_ticket.dart';
 
 class PatientDashboard extends StatelessWidget {
   const PatientDashboard({super.key});
@@ -9,7 +13,7 @@ class PatientDashboard extends StatelessWidget {
   Widget build(BuildContext context) {
     final authViewModel = Provider.of<AuthViewModel>(context);
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Patient Dashboard"),
@@ -51,9 +55,10 @@ class PatientDashboard extends StatelessWidget {
                     Icons.upload_file,
                     Colors.blue,
                     () {
-                      // Add upload report functionality
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Upload Report - Coming Soon')),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => UploadReportScreen()),
                       );
                     },
                   ),
@@ -63,9 +68,11 @@ class PatientDashboard extends StatelessWidget {
                     Icons.calendar_today,
                     Colors.green,
                     () {
-                      // Add book appointment functionality
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Book Appointment - Coming Soon')),
+                      // Navigate to BookingScreen
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const BookingScreen()),
                       );
                     },
                   ),
@@ -89,7 +96,33 @@ class PatientDashboard extends StatelessWidget {
                     () {
                       // Add edit profile functionality
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Edit Profile - Coming Soon')),
+                        const SnackBar(
+                            content: Text('Edit Profile - Coming Soon')),
+                      );
+                    },
+                  ),
+                  _buildMenuCard(
+                    context,
+                    'View Ticket',
+                    Icons.confirmation_number_outlined,
+                    Colors.amber,
+                    () {
+                      showModalBottomSheet(
+                        context: context,
+                        shape: const RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.vertical(top: Radius.circular(25.0)),
+                        ),
+                        builder: (context) => ChangeNotifierProvider(
+                          create: (_) => TicketViewModel(
+                            userId: context
+                                    .read<AuthViewModel>()
+                                    .currentUser
+                                    ?.uid ??
+                                '',
+                          ),
+                          child: const AppointmentTicket(),
+                        ),
                       );
                     },
                   ),
@@ -148,4 +181,28 @@ class PatientDashboard extends StatelessWidget {
       ),
     );
   }
-} 
+
+  Widget _buildTicketRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.w500,
+              color: Colors.grey,
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
