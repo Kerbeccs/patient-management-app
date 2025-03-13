@@ -4,6 +4,7 @@ class ReportModel {
   final String description;
   final String fileUrl;
   final DateTime uploadedAt;
+  final String? lastVisited;
 
   ReportModel({
     required this.reportId,
@@ -11,6 +12,7 @@ class ReportModel {
     required this.description,
     required this.fileUrl,
     required this.uploadedAt,
+    this.lastVisited,
   });
 
   Map<String, dynamic> toMap() {
@@ -20,6 +22,7 @@ class ReportModel {
       'description': description,
       'fileUrl': fileUrl,
       'uploadedAt': uploadedAt.toIso8601String(),
+      'lastVisited': lastVisited,
     };
   }
 
@@ -30,6 +33,7 @@ class ReportModel {
       description: map['description'] ?? '',
       fileUrl: map['fileUrl'] ?? '',
       uploadedAt: DateTime.parse(map['uploadedAt']),
+      lastVisited: map['lastVisited'],
     );
   }
-} 
+}

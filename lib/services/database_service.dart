@@ -46,16 +46,21 @@ class DatabaseService {
     try {
       print('Fetching reports for patient ID: $patientId'); // Debug print
 
-      // First check if reports collection exists
-      final allReports = await _db.collection('reports').get();
-      print(
-          'Total reports in collection: ${allReports.docs.length}'); // Debug print
+      // First get the patient data to get the lastVisited field
+      final patientDoc = await _db.collection('users').doc(patientId).get();
+      String? lastVisited;
+
+      if (patientDoc.exists) {
+        final patientData = patientDoc.data();
+        lastVisited = patientData?['lastVisited'];
+        print('Patient last visited: $lastVisited'); // Debug print
+      }
 
       // Get reports for specific patient
       final querySnapshot = await _db
           .collection('reports')
           .where('patientId', isEqualTo: patientId)
-          .get(); // Removed orderBy temporarily
+          .get();
 
       print(
           'Found ${querySnapshot.docs.length} reports for this patient'); // Debug print
@@ -65,9 +70,18 @@ class DatabaseService {
             'Sample report data: ${querySnapshot.docs.first.data()}'); // Debug print
       }
 
-      return querySnapshot.docs
-          .map((doc) => ReportModel.fromMap(doc.data()))
-          .toList();
+      // Map the reports and include the lastVisited field
+      return querySnapshot.docs.map((doc) {
+        final reportData = doc.data();
+        return ReportModel(
+          reportId: reportData['reportId'] ?? '',
+          patientId: reportData['patientId'] ?? '',
+          description: reportData['description'] ?? '',
+          fileUrl: reportData['fileUrl'] ?? '',
+          uploadedAt: DateTime.parse(reportData['uploadedAt']),
+          lastVisited: lastVisited, // Include the lastVisited field
+        );
+      }).toList();
     } catch (e) {
       print('Error fetching reports: $e');
       print('Error details: ${e.toString()}');

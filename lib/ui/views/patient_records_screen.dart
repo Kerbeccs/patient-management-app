@@ -135,137 +135,220 @@ class PatientDetailsScreen extends StatefulWidget {
 
 class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
   final DatabaseService _databaseService = DatabaseService();
+  late UserModel _patient;
+  bool _isRefreshing = false;
 
   @override
   void initState() {
     super.initState();
+    _patient = widget.patient;
+  }
+
+  Future<void> _refreshPatientData() async {
+    try {
+      setState(() {
+        _isRefreshing = true;
+      });
+
+      // Fetch the latest patient data
+      final updatedPatient = await _databaseService.getPatient(_patient.uid);
+      if (updatedPatient != null) {
+        setState(() {
+          _patient = updatedPatient;
+        });
+      }
+    } catch (e) {
+      print('Error refreshing patient data: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to refresh data: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isRefreshing = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.patient.patientName),
+        title: Text(_patient.patientName),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Patient Information',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const Divider(),
-                    _buildInfoRow('Name', widget.patient.patientName),
-                    _buildInfoRow('Email', widget.patient.email),
-                    _buildInfoRow('Phone', widget.patient.phoneNumber),
-                    _buildInfoRow('Age', '${widget.patient.age} years'),
-                    if (widget.patient.lastVisited != null)
-                      _buildInfoRow(
-                        'Last Visit',
-                        DateFormat('MMM d, yyyy')
-                            .format(widget.patient.lastVisited!),
-                      ),
-                    if (widget.patient.problemDescription != null)
-                      _buildInfoRow(
-                          'Problem', widget.patient.problemDescription!),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Uploaded Reports',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 10),
-            FutureBuilder<List<ReportModel>>(
-              future: _databaseService.getPatientReports(widget.patient.uid),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(
-                      child: Text(snapshot.error.toString(),
-                          style: const TextStyle(color: Colors.red)));
-                } else if (snapshot.data?.isEmpty ?? true) {
-                  return const Card(
+      body: _isRefreshing
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Card(
                     child: Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Text('No reports uploaded yet'),
-                    ),
-                  );
-                } else {
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: snapshot.data!.length,
-                    itemBuilder: (context, index) {
-                      final report = snapshot.data![index];
-                      return Card(
-                        child: ListTile(
-                          leading: const Icon(Icons.description),
-                          title: Text('Report ${index + 1}'),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(report.description),
-                              Text(
-                                'Uploaded: ${DateFormat('MMM d, yyyy').format(report.uploadedAt)}',
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                            ],
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Patient Information',
+                            style: Theme.of(context).textTheme.titleLarge,
                           ),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.visibility),
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (context) => Dialog(
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      AppBar(
-                                        title: const Text('Report Image'),
-                                        leading: IconButton(
-                                          icon: const Icon(Icons.close),
-                                          onPressed: () =>
-                                              Navigator.pop(context),
+                          const Divider(),
+                          _buildInfoRow('Name', _patient.patientName),
+                          _buildInfoRow('Email', _patient.email),
+                          _buildInfoRow('Phone', _patient.phoneNumber),
+                          _buildInfoRow('Age', '${_patient.age} years'),
+                          if (_patient.lastVisited != null)
+                            _buildInfoRow(
+                              'Last Visit',
+                              _patient.lastVisited!,
+                            ),
+                          if (_patient.problemDescription != null)
+                            _buildInfoRow(
+                                'Problem', _patient.problemDescription!),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Uploaded Reports',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 10),
+                  FutureBuilder<List<ReportModel>>(
+                    future: _databaseService.getPatientReports(_patient.uid),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      } else if (snapshot.hasError) {
+                        return Center(
+                            child: Text(snapshot.error.toString(),
+                                style: const TextStyle(color: Colors.red)));
+                      } else if (snapshot.data?.isEmpty ?? true) {
+                        return const Card(
+                          child: Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Text('No reports uploaded yet'),
+                          ),
+                        );
+                      } else {
+                        return ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: snapshot.data!.length,
+                          itemBuilder: (context, index) {
+                            final report = snapshot.data![index];
+                            return Card(
+                              child: ListTile(
+                                leading: const Icon(Icons.description),
+                                title: Text('Report ${index + 1}'),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(report.description),
+                                    Text(
+                                      'Uploaded: ${DateFormat('MMM d, yyyy').format(report.uploadedAt)}',
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                    if (report.lastVisited != null &&
+                                        report.lastVisited!.isNotEmpty)
+                                      Text(
+                                        'Last Visit: ${report.lastVisited}',
+                                        style: const TextStyle(
+                                            fontSize: 12, color: Colors.blue),
+                                      ),
+                                  ],
+                                ),
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.visibility),
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => Dialog(
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            AppBar(
+                                              title:
+                                                  const Text('Report Details'),
+                                              leading: IconButton(
+                                                icon: const Icon(Icons.close),
+                                                onPressed: () =>
+                                                    Navigator.pop(context),
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.all(16.0),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    report.description,
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .titleMedium,
+                                                  ),
+                                                  const SizedBox(height: 8),
+                                                  Text(
+                                                    'Uploaded: ${DateFormat('MMM d, yyyy').format(report.uploadedAt)}',
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .bodyMedium,
+                                                  ),
+                                                  if (report.lastVisited !=
+                                                          null &&
+                                                      report.lastVisited!
+                                                          .isNotEmpty)
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              top: 8.0),
+                                                      child: Text(
+                                                        'Last Visit: ${report.lastVisited}',
+                                                        style: TextStyle(
+                                                          fontSize: 14,
+                                                          color: Colors.blue,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  const SizedBox(height: 16),
+                                                ],
+                                              ),
+                                            ),
+                                            Image.network(
+                                              report.fileUrl,
+                                              loadingBuilder:
+                                                  (context, child, progress) {
+                                                if (progress == null)
+                                                  return child;
+                                                return const CircularProgressIndicator();
+                                              },
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                      Image.network(
-                                        report.fileUrl,
-                                        loadingBuilder:
-                                            (context, child, progress) {
-                                          if (progress == null) return child;
-                                          return const CircularProgressIndicator();
-                                        },
-                                      ),
-                                    ],
-                                  ),
+                                    );
+                                  },
                                 ),
-                              );
-                            },
-                          ),
-                        ),
-                      );
+                              ),
+                            );
+                          },
+                        );
+                      }
                     },
-                  );
-                }
-              },
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
-      ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: _refreshPatientData,
         child: const Icon(Icons.refresh),
       ),
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/auth_viewmodels.dart';
 import '../views/patient_records_screen.dart';
+import '../views/doctor_appointments_screen.dart';
 
 class DoctorDashboard extends StatelessWidget {
   const DoctorDashboard({super.key});
@@ -10,7 +11,12 @@ class DoctorDashboard extends StatelessWidget {
   Widget build(BuildContext context) {
     final authViewModel = Provider.of<AuthViewModel>(context);
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
+
+    // Debug information
+    print("Building doctor dashboard");
+    print("Current user: ${authViewModel.currentUser?.email}");
+    print("User ID: ${authViewModel.currentUser?.uid}");
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Doctor Dashboard"),
@@ -19,6 +25,7 @@ class DoctorDashboard extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
+              print("Doctor logging out");
               await authViewModel.signOut();
               Navigator.pushReplacementNamed(context, '/login');
             },
@@ -36,6 +43,35 @@ class DoctorDashboard extends StatelessWidget {
               width: double.infinity,
               fit: BoxFit.contain,
             ),
+            // Display doctor information
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Card(
+                elevation: 4,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Dr. Rajneesh Chaudhary",
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Email: ${authViewModel.currentUser?.email ?? 'Not available'}",
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "User ID: ${authViewModel.currentUser?.uid ?? 'Not available'}",
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: GridView.count(
@@ -51,8 +87,13 @@ class DoctorDashboard extends StatelessWidget {
                     Icons.calendar_today,
                     Colors.blue,
                     () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Coming Soon')),
+                      print("Navigating to doctor appointments screen");
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const DoctorAppointmentsScreen(),
+                        ),
                       );
                     },
                   ),
@@ -62,9 +103,11 @@ class DoctorDashboard extends StatelessWidget {
                     Icons.folder_shared,
                     Colors.green,
                     () {
+                      print("Navigating to patient records screen");
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const PatientRecordsScreen()),
+                        MaterialPageRoute(
+                            builder: (context) => const PatientRecordsScreen()),
                       );
                     },
                   ),
@@ -123,4 +166,4 @@ class DoctorDashboard extends StatelessWidget {
       ),
     );
   }
-} 
+}

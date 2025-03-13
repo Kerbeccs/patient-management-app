@@ -4,9 +4,11 @@ class UserModel {
   final String patientName;
   final String phoneNumber;
   final int age;
-  final String userType = 'patient';
+  final String userType;
   final String? problemDescription;
-  final DateTime? lastVisited;
+  final String? lastVisited;
+  final String? nextVisit;
+  final String? appointmentStatus;
   final List<String>? imageUrls;
 
   UserModel({
@@ -15,8 +17,11 @@ class UserModel {
     required this.patientName,
     required this.phoneNumber,
     required this.age,
+    this.userType = 'patient',
     this.problemDescription,
     this.lastVisited,
+    this.nextVisit,
+    this.appointmentStatus,
     this.imageUrls,
   });
 
@@ -29,7 +34,9 @@ class UserModel {
       'age': age,
       'userType': userType,
       'problemDescription': problemDescription,
-      'lastVisited': lastVisited?.toIso8601String(),
+      'lastVisited': lastVisited,
+      'nextVisit': nextVisit,
+      'appointmentStatus': appointmentStatus,
       'imageUrls': imageUrls,
     };
   }
@@ -41,10 +48,11 @@ class UserModel {
       patientName: map['patientName'] ?? '',
       phoneNumber: map['phoneNumber'] ?? '',
       age: map['age'] ?? 0,
+      userType: map['userType'] ?? 'patient',
       problemDescription: map['problemDescription'],
-      lastVisited: map['lastVisited'] != null
-          ? DateTime.parse(map['lastVisited'])
-          : null,
+      lastVisited: map['lastVisited'],
+      nextVisit: map['nextVisit'],
+      appointmentStatus: map['appointmentStatus'],
       imageUrls: List<String>.from(map['imageUrls'] ?? []),
     );
   }

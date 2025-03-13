@@ -18,6 +18,82 @@ class AuthViewModel extends ChangeNotifier {
 
   User? get currentUser => _auth.currentUser;
 
+  // Doctor login method
+  Future<bool> loginAsDoctor(String email, String password) async {
+    try {
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+
+      print("Attempting to login as doctor with email: $email");
+
+      UserCredential userCredential;
+      try {
+        // Try to sign in with email and password
+        userCredential = await _auth.signInWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+        print("Doctor login successful with existing account");
+      } catch (e) {
+        print("Doctor login failed, creating new account: $e");
+        // If sign in fails, create a new account
+        userCredential = await _auth.createUserWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+        print("New doctor account created successfully");
+      }
+
+      // Check if user exists in Firestore
+      final userDoc = await _firestore
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .get();
+
+      print("Checking if doctor exists in Firestore: ${userDoc.exists}");
+
+      if (!userDoc.exists) {
+        // Create doctor user model if first time sign in
+        final userModel = UserModel(
+          uid: userCredential.user!.uid,
+          email: email,
+          patientName: "Dr. Rajneesh Chaudhary",
+          phoneNumber: "",
+          age: 0,
+          userType: 'doctor', // Set userType to 'doctor'
+        );
+
+        // Save to Firestore
+        await _firestore
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .set(userModel.toMap());
+        print("Created new doctor record in Firestore");
+      } else {
+        // Update userType to 'doctor' if not already set
+        if (userDoc.data()?['userType'] != 'doctor') {
+          await _firestore
+              .collection('users')
+              .doc(userCredential.user!.uid)
+              .update({'userType': 'doctor'});
+          print("Updated existing user to doctor type");
+        } else {
+          print("User already has doctor type");
+        }
+      }
+
+      return true;
+    } catch (e) {
+      print("Doctor login error: $e");
+      _errorMessage = e.toString();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   // Add Google Sign In Method
   Future<bool> signInWithGoogle() async {
     try {
@@ -58,6 +134,7 @@ class AuthViewModel extends ChangeNotifier {
           patientName: user.displayName ?? 'Unknown',
           phoneNumber: user.phoneNumber ?? '',
           age: 0, // Default age, can be updated later
+          userType: 'patient', // Set userType to 'patient'
         );
 
         // Save to Firestore
@@ -103,8 +180,8 @@ class AuthViewModel extends ChangeNotifier {
         patientName: patientName,
         phoneNumber: phoneNumber,
         age: age,
+        userType: 'patient', // Set userType to 'patient'
       );
-
 
       await _firestore
           .collection('users')

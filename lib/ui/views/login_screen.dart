@@ -60,14 +60,37 @@ class LoginScreen extends StatelessWidget {
                     : () async {
                         String email = emailController.text.trim();
                         String password = passwordController.text.trim();
-                        
+
+                        print("Login attempt with email: $email");
+
                         // Check for doctor credentials
                         if (email == "DRJC" && password == "DRJC01") {
-                          Navigator.pushReplacementNamed(context, '/doctor');
+                          print(
+                              "Doctor credentials detected, attempting doctor login");
+                          // Use the actual Firebase email/password for the doctor account
+                          // This is just for demo purposes - in production, use a more secure approach
+                          final success = await authViewModel.loginAsDoctor(
+                              "doctor@example.com", "doctor123");
+
+                          if (success) {
+                            print(
+                                "Doctor login successful, navigating to doctor dashboard");
+                            Navigator.pushReplacementNamed(context, '/doctor');
+                          } else {
+                            print(
+                                "Doctor login failed: ${authViewModel.errorMessage}");
+                            // Show error message is already handled by the UI
+                          }
                         } else {
+                          print("Patient login attempt");
                           await authViewModel.login(email, password);
                           if (authViewModel.errorMessage == null) {
+                            print(
+                                "Patient login successful, navigating to patient dashboard");
                             Navigator.pushReplacementNamed(context, '/patient');
+                          } else {
+                            print(
+                                "Patient login failed: ${authViewModel.errorMessage}");
                           }
                         }
                       },
@@ -79,7 +102,7 @@ class LoginScreen extends StatelessWidget {
                     Navigator.pushReplacementNamed(context, '/signup'),
                 child: const Text("Don't have an account? Sign Up"),
               ),
-              
+
               // Add divider with "or" text
               const SizedBox(height: 20),
               Row(
@@ -99,7 +122,7 @@ class LoginScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 20),
-              
+
               // Social sign in options
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
